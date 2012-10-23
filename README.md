@@ -16,3 +16,9 @@ Planned features:
 * extract icons/sprites as PNG files
 * write a JSON file with sprite/icon hotspots
 * extract Pac.Pic. files as PNG files
+
+
+File format documentation:
+* [Generic Banks](http://www.exotica.org.uk/wiki/AMOS_file_formats)
+* [Pac.Pic.](http://www.exotica.org.uk/wiki/AMOS_Pac.Pic._format)
+
