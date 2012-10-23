@@ -1,2 +1,2 @@
 amosbank: amosbank.cc
-	g++ -o amosbank amosbank.cc
+	g++ -o amosbank -lpng amosbank.cc

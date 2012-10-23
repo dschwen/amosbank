@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <png.h>
+
 unsigned char *data;
 FILE *in;
 int size;
