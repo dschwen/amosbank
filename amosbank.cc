@@ -7,15 +7,17 @@
 
 #include <png.h>
 
+// data will contain the entire bank file 
 unsigned char *data;
-FILE *in;
 int size;
-bool pacpic = false;
+FILE *in;
 
+// known bank types
 const int ntypes = 3;
 const char* typelist[ntypes] = { "AmBk", "AmIc", "AmSp" };
 enum { T_AMBK, T_AMIC, T_AMSP };
 
+// function for fetching BigEndian data at a given offset
 char* getString( int pos, int len ) {
   char *ret = (char*)calloc(len+1,1);
   for( int i=0; i<len; ++i ) ret[i]=(char)data[i+pos];
@@ -36,6 +38,7 @@ void getRGB( int pos, int &r, int &g, int &b ) { // get RGB converted to 0..255
   b = (data[pos+1] & 0x0F) * 17;
 }
 
+// pac.pic. RLE decompressor
 void convertPacPic() {
   int o = 20;
   if( get4(o) == 0x12031990 ) o+=90;
@@ -48,6 +51,34 @@ void convertPacPic() {
       h = get2(o+10),
       l = get2(o+12);
   printf("width: %d bytes\nheight: %d linelumps a %d lines\n", w,h,l);
+}
+
+// save an image in bitplane format as PNG
+void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned char *raw, FILE *out  ) {
+  // pixel array of palette indices
+  unsigned char *raw2 = (unsigned char*)calloc( w*16*h,1);
+
+  // iterate over d bitplanes
+  int bit = 1, o=0;
+  for( int bp=0; bp<d; ++bp ) {
+    //iterate over scanlines
+    for( int y=0; y<h; ++y ) {
+      // iterate over bytes
+      for( int x=0; x<w*2; ++x ) {
+        unsigned char v = raw[o++];
+        // iterate over bits
+        for( int j=0; j<8; ++j ) {
+          if( v & (1<<j) ) {
+            raw2[x*8+(7-j)+(w*16*y)] |= bit;
+          }
+        }
+      }
+    }
+    bit*=2;
+  }
+
+  // debug: output raw data
+  fwrite( raw2, w*16*h,1, out );
 }
 
 int main( int argc, char *argv[] ) {
@@ -110,6 +141,8 @@ int main( int argc, char *argv[] ) {
   if( type==T_AMSP || type==T_AMIC ) {
     int nsp = get2(4);
     int r[32],g[32],b[32];
+    char fname[1000]; //const buffer = retarded (lazy)
+
     printf("Number of icons/sprites: %d\n", nsp);
 
     // reading palette from end of file
@@ -130,6 +163,10 @@ int main( int argc, char *argv[] ) {
       printf( "sprite %d: %d*%d %dpl hotspot(%d,%d)\n",i,w*16,h,d,hx,hy);
       
       // read data at o and output png (maybe?)
+      snprintf( fname, 1000, "%s.%d.raw", argv[1],i );
+      FILE* out = fopen( fname, "wb" );
+      saveBitplanesAsPNG( w,h,d, r,g,b, &data[o], out  );
+      fclose(out);
 
       o += w*h*d*2;
     }
