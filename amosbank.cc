@@ -260,19 +260,53 @@ int main( int argc, char *argv[] ) {
     return 1;
   }
 
+  // output filename buffer
+  char fname[1000]; //const buffer = retarded (lazy)
+
   // generic bank
   if( type==T_AMBK ) {
-    printf("Bankname: %s\n", getString(12,8) );
+    char *bname = getString(12,8);
+    printf("Bankname: '%s'\n", bname );
     printf("Banknum:  %d\n", get2(4) );
     printf("Fast or Chip:  %d\n", get2(6) );
     printf("type=%d\n",type);
 
     // test for pac.pic.
-    if( strcmp(getString(12,8),"Pac.Pic.")==0 ) {
+    if( strcmp(bname,"Pac.Pic.")==0 ) {
       printf("Pac.Pic. detected\n");
       convertPacPic(argv[1]);
       return 0;
     }
+
+    // build JSON output filename
+    snprintf( fname, 1000, "%s.json", argv[1] );
+
+    // test for Work
+    if( strcmp(bname,"Work    ")==0 ) {
+      FILE* out = fopen( fname, "wt" );
+      printf("Work bank detected\nnumber of 2byte words: %d\n", (size-20)/2 );
+      fprintf( out, "{ words: [ " );
+      for( i=0; i<(size-20)/2; ++i ) {
+        fprintf( out, i>0?" ,%d":"%d", get2(20+i*2) );
+      }
+      fprintf( out, " ] }\n" );
+      fclose(out);
+      return 0;
+    }
+
+    // test for Datas
+    if( strcmp(bname,"Datas   ")==0 ) {
+      FILE* out = fopen( fname, "wt" );
+      printf("Data bank detected\nnumber of bytes: %d\n", (size-20) );
+      fprintf( out, "{ bytes: [ " );
+      for( i=0; i<(size-20); ++i ) {
+        fprintf( out, i>0?" ,%d":"%d", int(data[20+i]) );
+      }
+      fprintf( out, " ] }\n" );
+      fclose(out);
+      return 0;
+    }
+
 
     // nothing to do (dump binary data maybe?)
     return 0;
@@ -280,7 +314,6 @@ int main( int argc, char *argv[] ) {
 
   if( type==T_AMSP || type==T_AMIC ) {
     int nsp = get2(4);
-    char fname[1000]; //const buffer = retarded (lazy)
 
     printf("Number of icons/sprites: %d\n", nsp);
 

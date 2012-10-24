@@ -17,10 +17,11 @@ This project is in its infancy. Current features are:
 * allow fetching palette data from external icon or sprite file
 * listing of Pac.Pic. picture dimensions
 * listing of bank names
+* **writing certain memory banks as JSON**
 
 Planned features:
 * write a JSON file with sprite/icon hotspots
-* Musik banks
+* Musik/Sample banks
 
 File format documentation:
 * [Generic Banks](http://www.exotica.org.uk/wiki/AMOS_file_formats)
