@@ -71,9 +71,16 @@ void loadBobPalette( char *fname ) {
 }
 
 // save an image in bitplane format as PNG
+//  w      image width in bytes
+//  h      image height in pixels
+//  d      depth (number of bitplanes)
+//  r,g,b  palette
+//  raw    memory containing consecutive bitplanes that form the image
+//  out    open binary output file handle
+//  trans  make color 0 transparent
 void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned char *raw, FILE *out, bool trans ) {
   // pixel array of palette indices
-  unsigned char *raw2 = (unsigned char*)calloc( w*16*h,1);
+  unsigned char *raw2 = (unsigned char*)calloc( w*8*h,1);
 
   // iterate over d bitplanes
   int bit = 1, o=0;
@@ -81,12 +88,12 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
     //iterate over scanlines
     for( int y=0; y<h; ++y ) {
       // iterate over bytes
-      for( int x=0; x<w*2; ++x ) {
+      for( int x=0; x<w; ++x ) {
         unsigned char v = raw[o++];
         // iterate over bits
         for( int j=0; j<8; ++j ) {
           if( v & (1<<j) ) {
-            raw2[x*8+(7-j)+(w*16*y)] |= bit;
+            raw2[x*8+(7-j)+(w*8*y)] |= bit;
           }
         }
       }
@@ -109,12 +116,12 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
 
   png_init_io( png_ptr, out );
   png_set_compression_level( png_ptr, Z_BEST_COMPRESSION );
-  png_set_IHDR( png_ptr, info_ptr, w*16, h, 8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
+  png_set_IHDR( png_ptr, info_ptr, w*8, h, 8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
 
   // setup row pointers
   png_byte **row_pointers = (png_byte**)calloc( h, sizeof(png_byte*) );
   for( int i=0; i<h; ++i ) {
-    row_pointers[i] = (png_byte*)&raw2[i*w*16];
+    row_pointers[i] = (png_byte*)&raw2[i*w*8];
   }
 
   // setup PNG palette
@@ -207,7 +214,7 @@ void convertPacPic( const char *base ) {
   char fname[1000];
   snprintf( fname, 1000, "%s.png", base );
   FILE* out = fopen( fname, "wb" );
-  saveBitplanesAsPNG( w/2,h*ll,d, r,g,b, raw, out, false ); // TODO: this only works for even w!
+  saveBitplanesAsPNG( w,h*ll,d, r,g,b, raw, out, false );
   fclose(out);
 }
 
@@ -297,7 +304,7 @@ int main( int argc, char *argv[] ) {
       // read data at o and output png (maybe?)
       snprintf( fname, 1000, "%s.%d.png", argv[1],i );
       FILE* out = fopen( fname, "wb" );
-      saveBitplanesAsPNG( w,h,d, r,g,b, &data[o], out, true );
+      saveBitplanesAsPNG( w*2,h,d, r,g,b, &data[o], out, true );
       fclose(out);
 
       o += w*h*d*2;
