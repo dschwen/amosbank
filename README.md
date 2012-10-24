@@ -10,19 +10,17 @@ bankfile is the AMOS bank to be extacted. The optional palettebank is the filena
 
 This project is in its infancy. Current features are:
 
-* writing all sprites/icons as individual PNG files
+* **writing all sprites/icons as individual PNG files**
 * listing of sprite/icon bank color palettes
 * listing of sprite/icon bank sprites (dimensions, hotspots)
-
-* writing Pac.Pic. picture as PNG file
+* **writing Pac.Pic. picture as PNG file**
 * allow fetching palette data from external icon or sprite file
 * listing of Pac.Pic. picture dimensions
-
 * listing of bank names
 
 Planned features:
 * write a JSON file with sprite/icon hotspots
-
+* Musik banks
 
 File format documentation:
 * [Generic Banks](http://www.exotica.org.uk/wiki/AMOS_file_formats)
