@@ -2,10 +2,14 @@ amosbank
 ========
 
 A converter/unpacker for AMOS banks (the Amiga programming language)
+
 (c) by Daniel Schwen, 2012
+
 Licensed under CC-BY-SA 3.0
 
-Usage: 
+
+Usage:
+
     amosbank bankfile \[palettebank\]
 
 bankfile is the AMOS bank to be extacted. The optional palettebank is the filename of an icon or sprite bank that can provide a color palette if bankfile is a Pac.Pic. file.
