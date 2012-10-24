@@ -78,7 +78,7 @@ void loadBobPalette( char *fname ) {
 //  raw    memory containing consecutive bitplanes that form the image
 //  out    open binary output file handle
 //  trans  make color 0 transparent
-void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned char *raw, FILE *out, bool trans ) {
+void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned char *raw, FILE *out, bool trans, bool ham=false ) {
   // pixel array of palette indices
   unsigned char *raw2 = (unsigned char*)calloc( w*8*h,1);
 
@@ -101,8 +101,35 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
     bit*=2;
   }
 
-  // debug: output raw data
-  //fwrite( raw2, w*16*h,1, out );
+  // decode HAM data
+  if(ham) {
+    unsigned char *raw3 = (unsigned char*)calloc( 3*w*8*h,1);
+    int ch,cl;
+    for( int y=0; y<h; ++y ) {
+      int lr=0,lg=0,lb=0;
+      for( int x=0; x<w*8; ++x ) {
+        ch = raw2[x+y*w*8];
+        cl = ch%16; ch/=16;
+        if( ch==0 ) { // pick base color
+          lr=r[cl];
+          lg=g[cl];
+          lb=b[cl];
+        } else { // hold-and-modify
+          if( ch==1 ) lb=cl*17;
+          if( ch==2 ) lr=cl*17;
+          if( ch==3 ) lg=cl*17;
+          //lr=lg=lb=128;
+        }
+        raw3[3*(x+y*w*8)] = lr;
+        raw3[3*(x+y*w*8)+1] = lg;
+        raw3[3*(x+y*w*8)+2] = lb;
+      }
+    }
+    // debug: output raw data
+    fwrite( raw3, w*8*h, 3, out );
+    return;
+  }
+
 
   // initialize libpng
   png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, png_voidp_NULL, png_error_ptr_NULL, png_error_ptr_NULL );
@@ -134,7 +161,7 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
       palette[i].green = g[i];
       palette[i].blue  = b[i];
     } else {
-      // Extra Half-Bright (EHB)
+      // Extra Half-Brite (EHB)
       palette[i].red   = r[i-32]/2;
       palette[i].green = g[i-32]/2;
       palette[i].blue  = b[i-32]/2;
@@ -160,9 +187,11 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
 // pac.pic. RLE decompressor
 void convertPacPic( const char *base ) {
   int o = 20;
+  bool ham = false;
   if( get4(o) == 0x12031990 ) {
     // detect HAM
     if( get2(o+20) & 0x800 ) {
+      ham = true;
       printf("HAM data is not yet supported, output will look garbled!\n");
     }
     // fetch palette
@@ -225,7 +254,7 @@ void convertPacPic( const char *base ) {
   char fname[1000];
   snprintf( fname, 1000, "%s.png", base );
   FILE* out = fopen( fname, "wb" );
-  saveBitplanesAsPNG( w,h*ll,d, r,g,b, raw, out, false );
+  saveBitplanesAsPNG( w,h*ll,d, r,g,b, raw, out, false, ham );
   fclose(out);
 }
 
