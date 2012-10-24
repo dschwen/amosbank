@@ -161,6 +161,10 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
 void convertPacPic( const char *base ) {
   int o = 20;
   if( get4(o) == 0x12031990 ) {
+    // detect HAM
+    if( get2(o+20) & 0x800 ) {
+      printf("HAM data is not yet supported, output will look garbled!\n");
+    }
     // fetch palette
     for( int i=0; i<32; ++i ) { 
       getRGB( o+26+i*2, r[i],g[i],b[i] ); 
