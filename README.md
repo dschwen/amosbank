@@ -18,6 +18,7 @@ This project is in its infancy. Current features are:
 * listing of Pac.Pic. picture dimensions
 * listing of bank names
 * support for Extra Half-Brite and HAM images!
+* **writing sample banks as individual WAV files**
 * **writing certain memory banks as JSON**
 
 Planned features:
@@ -30,3 +31,4 @@ File format documentation:
 
 HAM images are saved as 24bit RGB PNG files. All other image formats are saved as indexed color images. This may allow recovering palette modification effects that were frequently used on the Amiga. For Icons and Sprites color zero is given an alpha value of 0.0, making color 0 fully transparent. Opacity and the original color is recoverable by setting the alpha value back to 1.0 in an image editor. In image files all colors are fully opaque.
 
+Samples are assumed to be always mono 8bit. They are converted from signed 8bit to unsigned 8bit (what is what PCM expects) by adding 128 to each sample value.

@@ -324,6 +324,52 @@ int main( int argc, char *argv[] ) {
       return 0;
     }
 
+    // test for Samples
+    if( strcmp(bname,"Samples ")==0 ) {
+      int f,l, o, nsam = get2(20);
+      int16_t i16;
+      int32_t i32, s1size, s2size;
+      const char *tag[] = { "RIFF", "WAVE", "fmt ", "data" };
+      printf( "Found %d samples\n", nsam );
+      for( i=0; i<nsam; i++ ) {
+        o = get4(22+i*4)+20;
+        char *sname = getString(o,8);
+        snprintf( fname, 1000, "%s.%d.%s.wav", argv[1],i,sname );
+        printf("%s\n", fname);
+        f = get2(o+8);
+        l = get4(o+10);
+        printf("%d Hz, %d bytes\n",f,l);
+
+        FILE* out = fopen( fname, "wb" );
+        // write WAV header
+        fwrite( tag[0], 4, 1, out );
+        s1size = 16;
+        s2size = l;
+        i32 = 4 + (8 + s1size) + (8 + s2size); fwrite( &i32, 1, 4, out);
+        fwrite( tag[1], 4, 1, out );
+        fwrite( tag[2], 4, 1, out );
+        fwrite( &s1size, 1, 4, out);
+        i16 = 1; fwrite( &i16, 1, 2, out); // PCM
+        i16 = 1; fwrite( &i16, 1, 2, out); // mono
+        i32 = f; fwrite( &i32, 1, 4, out); // Sample rate
+        i32 = f*1*1; fwrite( &i32, 1, 4, out); // byte rate (f*chan*bytepersample)
+        i16 = 1; fwrite( &i16, 1, 2, out); // blockalign
+        i16 = 8; fwrite( &i16, 1, 2, out); // bits per sample
+
+        // 'data' chunk
+        fwrite( tag[3], 4, 1, out );
+        fwrite( &s2size, 1, 4, out);
+
+        // convert signed 8bit to unsigned 8bit
+        char *sdata = (char*)data;
+        for( int j=0; j<l; ++j ) data[o+14+j] = (unsigned char)(int(sdata[o+14+j])+128);
+        fwrite( &data[o+14], l, 1, out);
+
+        fclose(out);
+        free(sname);
+      }
+      return 0;
+    }
     // build JSON output filename
     snprintf( fname, 1000, "%s.json", argv[1] );
 
