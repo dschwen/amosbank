@@ -160,7 +160,14 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
 // pac.pic. RLE decompressor
 void convertPacPic( const char *base ) {
   int o = 20;
-  if( get4(o) == 0x12031990 ) o+=90;
+  if( get4(o) == 0x12031990 ) {
+    // fetch palette
+    for( int i=0; i<32; ++i ) { 
+      getRGB( o+26+i*2, r[i],g[i],b[i] ); 
+      printf( "color %d, (%d,%d,%d)\n", i, r[i],g[i],b[i] );
+    }
+    o+=90;
+  }
   if( get4(o) != 0x06071963 ) {
     printf("could not find picture header!\n");
     exit(1);
