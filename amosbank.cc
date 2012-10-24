@@ -332,15 +332,18 @@ int main( int argc, char *argv[] ) {
       const char *tag[] = { "RIFF", "WAVE", "fmt ", "data" };
       printf( "Found %d samples\n", nsam );
       for( i=0; i<nsam; i++ ) {
+        // get sample name and open output file
         o = get4(22+i*4)+20;
         char *sname = getString(o,8);
         snprintf( fname, 1000, "%s.%d.%s.wav", argv[1],i,sname );
         printf("%s\n", fname);
+        FILE* out = fopen( fname, "wb" );
+
+        // get sample properties
         f = get2(o+8);
         l = get4(o+10);
         printf("%d Hz, %d bytes\n",f,l);
 
-        FILE* out = fopen( fname, "wb" );
         // write WAV header
         fwrite( tag[0], 4, 1, out );
         s1size = 16;
@@ -365,11 +368,13 @@ int main( int argc, char *argv[] ) {
         for( int j=0; j<l; ++j ) data[o+14+j] = (unsigned char)(int(sdata[o+14+j])+128);
         fwrite( &data[o+14], l, 1, out);
 
+        // close file
         fclose(out);
         free(sname);
       }
       return 0;
     }
+
     // build JSON output filename
     snprintf( fname, 1000, "%s.json", argv[1] );
 
@@ -399,14 +404,13 @@ int main( int argc, char *argv[] ) {
       return 0;
     }
 
-
     // nothing to do (dump binary data maybe?)
+    printf("Unknown bank name!\n");
     return 0;
   }
 
   if( type==T_AMSP || type==T_AMIC ) {
     int nsp = get2(4);
-
     printf("Number of icons/sprites: %d\n", nsp);
 
     // reading palette from end of file
@@ -435,7 +439,6 @@ int main( int argc, char *argv[] ) {
       o += w*h*d*2;
     }
   }
-
 
   return 0;
 }
