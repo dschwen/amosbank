@@ -38,23 +38,9 @@ void getRGB( int pos, int &r, int &g, int &b ) { // get RGB converted to 0..255
   b = (data[pos+1] & 0x0F) * 17;
 }
 
-// pac.pic. RLE decompressor
-void convertPacPic() {
-  int o = 20;
-  if( get4(o) == 0x12031990 ) o+=90;
-  if( get4(o) != 0x06071963 ) {
-    printf("could not find picture header!\n");
-    exit(1);
-  }
-
-  int w = get2(o+8),
-      h = get2(o+10),
-      l = get2(o+12);
-  printf("width: %d bytes\nheight: %d linelumps a %d lines\n", w,h,l);
-}
 
 // save an image in bitplane format as PNG
-void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned char *raw, FILE *out  ) {
+void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned char *raw, FILE *out, bool trans ) {
   // pixel array of palette indices
   unsigned char *raw2 = (unsigned char*)calloc( w*16*h,1);
 
@@ -119,8 +105,10 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
   png_set_PLTE( png_ptr, info_ptr, palette, ncol );
 
   //set transparency for color 0
-  png_byte trans_alpha = 0;
-  png_set_tRNS( png_ptr, info_ptr, &trans_alpha, 1, NULL );
+  if(trans) {
+    png_byte trans_alpha = 0;
+    png_set_tRNS( png_ptr, info_ptr, &trans_alpha, 1, NULL );
+  }
 
   // start writing the file
   png_write_info( png_ptr, info_ptr );
@@ -129,6 +117,74 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
   // finish up
   png_write_end( png_ptr, info_ptr );
   png_destroy_write_struct( &png_ptr, &info_ptr );
+}
+
+// pac.pic. RLE decompressor
+void convertPacPic( const char *base ) {
+  int o = 20;
+  if( get4(o) == 0x12031990 ) o+=90;
+  if( get4(o) != 0x06071963 ) {
+    printf("could not find picture header!\n");
+    exit(1);
+  }
+
+  int w  = get2(o+8),
+      h  = get2(o+10),
+      ll = get2(o+12),
+      d  = get2(o+14);
+  printf("width: %d bytes\nheight: %d linelumps a %d lines\n", w,h,ll);
+
+  // reserve bitplane memory
+  unsigned char* raw = (unsigned char*)calloc(w*h*ll*d,1);
+  unsigned char *picdata = &data[o+24];
+  unsigned char *rledata = &data[o+get4(o+16)];
+  unsigned char *points  = &data[o+get4(o+20)];
+
+  int rrbit = 6, rbit = 7;
+  int picbyte = *picdata++;
+  int rlebyte = *rledata++;
+  if (*points & 0x80) rlebyte = *rledata++;
+
+  for( int i = 0; i < d; i++) {
+    unsigned char *lump_start = &raw[i*w*h*ll];
+    for( int j = 0; j < h; j++ ) {
+      unsigned char *lump_offset = lump_start;
+      for( int k = 0; k < w; k++ ) {
+        unsigned char *dd = lump_offset;
+        for( int l = 0; l < ll; l++ ) {
+          /* if the current RLE bit is set to 1, read in a new picture byte */
+          if (rlebyte & (1 << rbit--)) picbyte = *picdata++;
+
+          /* write picture byte and move down by one line in the picture */
+          *dd = picbyte;
+          dd += w;
+
+          /* if we've run out of RLE bits, check the POINTS bits to see if a new RLE byte is needed */
+          if (rbit < 0) {
+            rbit = 7;
+            if (*points & (1 << rrbit--)) rlebyte = *rledata++;
+            if (rrbit < 0)  rrbit = 7, points++;
+          }
+        }
+        lump_offset++;
+      }
+      lump_start += w * ll;
+    }
+  }
+
+  // save png
+  char fname[1000];
+  snprintf( fname, 1000, "%s.png", base );
+  FILE* out = fopen( fname, "wb" );
+  int r[32]={0},g[32]={0},b[32]={0};
+  for( int i=1; i<32; ++i ) { // random palette for debugging
+    r[i] = rand() & 255;
+    g[i] = rand() & 255;
+    b[i] = rand() & 255;
+  }
+  // TODO: this only works for even w!
+  saveBitplanesAsPNG( w/2,h*ll,d, r,g,b, raw, out, false );
+  fclose(out);
 }
 
 int main( int argc, char *argv[] ) {
@@ -180,7 +236,7 @@ int main( int argc, char *argv[] ) {
     // test for pac.pic.
     if( strcmp(getString(12,8),"Pac.Pic.")==0 ) {
       printf("Pac.Pic. detected\n");
-      convertPacPic();
+      convertPacPic(argv[1]);
       return 0;
     }
 
@@ -215,7 +271,7 @@ int main( int argc, char *argv[] ) {
       // read data at o and output png (maybe?)
       snprintf( fname, 1000, "%s.%d.png", argv[1],i );
       FILE* out = fopen( fname, "wb" );
-      saveBitplanesAsPNG( w,h,d, r,g,b, &data[o], out  );
+      saveBitplanesAsPNG( w,h,d, r,g,b, &data[o], out, true );
       fclose(out);
 
       o += w*h*d*2;
