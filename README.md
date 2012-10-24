@@ -17,6 +17,7 @@ This project is in its infancy. Current features are:
 * allow fetching palette data from external icon or sprite file
 * listing of Pac.Pic. picture dimensions
 * listing of bank names
+* support for Extra Half-Brite and HAM images!
 * **writing certain memory banks as JSON**
 
 Planned features:
@@ -26,4 +27,6 @@ Planned features:
 File format documentation:
 * [Generic Banks](http://www.exotica.org.uk/wiki/AMOS_file_formats)
 * [Pac.Pic.](http://www.exotica.org.uk/wiki/AMOS_Pac.Pic._format)
+
+HAM images are saved as 24bit RGB PNG files. All other image formats are saved as indexed color images. This may allow recovering palette modification effects that were frequently used on the Amiga. For Icons and Sprites color zero is given an alpha value of 0.0, making color 0 fully transparent. Opacity and the original color is recoverable by setting the alpha value back to 1.0 in an image editor. In image files all colors are fully opaque.
 

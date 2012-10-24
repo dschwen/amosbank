@@ -80,7 +80,7 @@ void loadBobPalette( char *fname ) {
 //  trans  make color 0 transparent
 void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned char *raw, FILE *out, bool trans, bool ham=false ) {
   // pixel array of palette indices
-  unsigned char *raw2 = (unsigned char*)calloc( w*8*h,1);
+  unsigned char *raw3, *raw2 = (unsigned char*)calloc( w*8*h,1);
 
   // iterate over d bitplanes
   int bit = 1, o=0;
@@ -103,7 +103,7 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
 
   // decode HAM data
   if(ham) {
-    unsigned char *raw3 = (unsigned char*)calloc( 3*w*8*h,1);
+    raw3 = (unsigned char*)calloc( 3*w*8*h,1);
     int ch,cl;
     for( int y=0; y<h; ++y ) {
       int lr=0,lg=0,lb=0;
@@ -126,8 +126,8 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
       }
     }
     // debug: output raw data
-    fwrite( raw3, w*8*h, 3, out );
-    return;
+    //fwrite( raw3, w*8*h, 3, out );
+    //return;
   }
 
 
@@ -143,12 +143,16 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
 
   png_init_io( png_ptr, out );
   png_set_compression_level( png_ptr, Z_BEST_COMPRESSION );
-  png_set_IHDR( png_ptr, info_ptr, w*8, h, 8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
+  png_set_IHDR( png_ptr, info_ptr, w*8, h, 8, ham?PNG_COLOR_TYPE_RGB:PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
 
   // setup row pointers
   png_byte **row_pointers = (png_byte**)calloc( h, sizeof(png_byte*) );
-  for( int i=0; i<h; ++i ) {
-    row_pointers[i] = (png_byte*)&raw2[i*w*8];
+  if(ham) {
+   for( int i=0; i<h; ++i )
+      row_pointers[i] = (png_byte*)&raw3[i*w*8*3];
+  } else {
+   for( int i=0; i<h; ++i )
+      row_pointers[i] = (png_byte*)&raw2[i*w*8];
   }
 
   // setup PNG palette
@@ -167,12 +171,14 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
       palette[i].blue  = b[i-32]/2;
     }
   }
-  png_set_PLTE( png_ptr, info_ptr, palette, ncol );
+  if(!ham) {
+    png_set_PLTE( png_ptr, info_ptr, palette, ncol );
 
-  //set transparency for color 0
-  if(trans) {
-    png_byte trans_alpha = 0;
-    png_set_tRNS( png_ptr, info_ptr, &trans_alpha, 1, NULL );
+    //set transparency for color 0
+    if(trans) {
+      png_byte trans_alpha = 0;
+      png_set_tRNS( png_ptr, info_ptr, &trans_alpha, 1, NULL );
+    }
   }
 
   // start writing the file
