@@ -12,6 +12,9 @@ unsigned char *data;
 int size;
 FILE *in;
 
+// palette data
+int r[32]={0},g[32]={0},b[32]={0};
+
 // known bank types
 const int ntypes = 3;
 const char* typelist[ntypes] = { "AmBk", "AmIc", "AmSp" };
@@ -38,6 +41,34 @@ void getRGB( int pos, int &r, int &g, int &b ) { // get RGB converted to 0..255
   b = (data[pos+1] & 0x0F) * 17;
 }
 
+void loadBobPalette( char *fname ) {
+  // get filesize
+  struct stat filestatus;
+  stat( fname, &filestatus );
+
+  // open icon or sprite bank
+  FILE *in = fopen(fname,"rb");
+  if(!in) {
+    printf("could open external palette file!\n");
+    exit(1);
+  }
+
+  // load palette from end of file
+  unsigned char pal[64];
+  fseek( in, filestatus.st_size-64, SEEK_SET );
+  if( fread(pal,1,64,in) != 64 ) {
+    printf("could not read palette!\n");
+    exit(1);
+  }
+  fclose(in);
+
+  // extract color data
+  for( int i=0; i<32; ++i ) {
+    r[i] = (pal[i*2] & 0x0F) * 17;
+    g[i] = ((pal[i*2+1] & 0xF0)/16) * 17;
+    b[i] = (pal[i*2+1] & 0x0F) * 17;
+  }
+}
 
 // save an image in bitplane format as PNG
 void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned char *raw, FILE *out, bool trans ) {
@@ -176,24 +207,20 @@ void convertPacPic( const char *base ) {
   char fname[1000];
   snprintf( fname, 1000, "%s.png", base );
   FILE* out = fopen( fname, "wb" );
-  int r[32]={0},g[32]={0},b[32]={0};
-  for( int i=1; i<32; ++i ) { // random palette for debugging
-    r[i] = rand() & 255;
-    g[i] = rand() & 255;
-    b[i] = rand() & 255;
-  }
-  // TODO: this only works for even w!
-  saveBitplanesAsPNG( w/2,h*ll,d, r,g,b, raw, out, false );
+  saveBitplanesAsPNG( w/2,h*ll,d, r,g,b, raw, out, false ); // TODO: this only works for even w!
   fclose(out);
 }
 
 int main( int argc, char *argv[] ) {
-  if( argc != 2 ) {
-    printf("Usage: amosbank filename\n");
+  if( argc != 2 && argc != 3 ) {
+    printf("Usage: amosbank filename [bobfile]\nif a second filename is supplies it is assumed to be an icon or sprite bank. Its palette is used for the image then.\n");
     return 1;
   }
 
   int i;
+
+  // load external palette
+  if( argc == 3 ) loadBobPalette(argv[2]);
 
   // get filesize
   struct stat filestatus;
@@ -246,7 +273,6 @@ int main( int argc, char *argv[] ) {
 
   if( type==T_AMSP || type==T_AMIC ) {
     int nsp = get2(4);
-    int r[32],g[32],b[32];
     char fname[1000]; //const buffer = retarded (lazy)
 
     printf("Number of icons/sprites: %d\n", nsp);
