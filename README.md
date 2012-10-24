@@ -5,7 +5,8 @@ A converter/unpacker for AMOS banks (the Amiga programming language)
 (c) by Daniel Schwen, 2012
 Licensed under CC-BY-SA 3.0
 
-Usage: amosbank bankfile \[palettebank\]
+Usage: 
+    amosbank bankfile \[palettebank\]
 
 bankfile is the AMOS bank to be extacted. The optional palettebank is the filename of an icon or sprite bank that can provide a color palette if bankfile is a Pac.Pic. file.
 
@@ -25,7 +26,6 @@ This project is in its infancy. Current features are:
 
 Planned features:
 * write a JSON file with sprite/icon hotspots
-* Musik banks (pretty complicated!)
 * AMAL banks
 
 File format documentation:
@@ -35,3 +35,8 @@ File format documentation:
 HAM images are saved as 24bit RGB PNG files. All other image formats are saved as indexed color images. This may allow recovering palette modification effects that were frequently used on the Amiga. For Icons and Sprites color zero is given an alpha value of 0.0, making color 0 fully transparent. Opacity and the original color is recoverable by setting the alpha value back to 1.0 in an image editor. In image files all colors are fully opaque.
 
 Samples are assumed to be always mono 8bit. They are converted from signed 8bit to unsigned 8bit (what is what PCM expects) by adding 128 to each sample value.
+
+To convert AMOS Music Banks use [Abk2Mod-II](http://aminet.net/package/dev/amos/Abk2Mod-II) on AmigaOS (emulator). The resulting protracker module can be converted to mp3 using xmp
+
+    xmp -o file.wav -b 16 file.mod
+    lame -V2 file.wav file.mp3
