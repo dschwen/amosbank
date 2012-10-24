@@ -2,6 +2,8 @@ amosbank
 ========
 
 A converter/unpacker for AMOS banks (the Amiga programming language)
+(c) by Daniel Schwen, 2012
+Licensed under CC-BY-SA 3.0
 
 Usage: amosbank bankfile \[palettebank\]
 
@@ -23,7 +25,8 @@ This project is in its infancy. Current features are:
 
 Planned features:
 * write a JSON file with sprite/icon hotspots
-* Musik/Sample banks
+* Musik banks (pretty complicated!)
+* AMAL banks
 
 File format documentation:
 * [Generic Banks](http://www.exotica.org.uk/wiki/AMOS_file_formats)
