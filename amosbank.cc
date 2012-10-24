@@ -118,6 +118,10 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
   }
   png_set_PLTE( png_ptr, info_ptr, palette, ncol );
 
+  //set transparency for color 0
+  png_byte trans_alpha = 0;
+  png_set_tRNS( png_ptr, info_ptr, &trans_alpha, 1, NULL );
+
   // start writing the file
   png_write_info( png_ptr, info_ptr );
   png_write_rows( png_ptr, row_pointers, h );
