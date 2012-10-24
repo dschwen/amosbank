@@ -78,7 +78,53 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
   }
 
   // debug: output raw data
-  fwrite( raw2, w*16*h,1, out );
+  //fwrite( raw2, w*16*h,1, out );
+
+  // initialize libpng
+  png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, png_voidp_NULL, png_error_ptr_NULL, png_error_ptr_NULL );
+  if (!png_ptr) exit(1);
+
+  png_infop info_ptr = png_create_info_struct(png_ptr);
+  if (!info_ptr) {
+    png_destroy_write_struct( &png_ptr, (png_infopp)NULL );
+    exit(1);
+  }
+
+  png_init_io( png_ptr, out );
+  png_set_compression_level( png_ptr, Z_BEST_COMPRESSION );
+  png_set_IHDR( png_ptr, info_ptr, w*16, h, 8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
+
+  // setup row pointers
+  png_byte **row_pointers = (png_byte**)calloc( h, sizeof(png_byte*) );
+  for( int i=0; i<h; ++i ) {
+    row_pointers[i] = (png_byte*)&raw2[i*w*16];
+  }
+
+  // setup PNG palette
+  png_color palette[64] = {0};
+  int ncol = 1<<d;
+  printf("setting up %d colors\n",ncol);
+  for( int i=0; i<ncol; ++i ) {
+    if( i<32 ) {
+      palette[i].red   = r[i];
+      palette[i].green = g[i];
+      palette[i].blue  = b[i];
+    } else {
+      // Extra Half-Bright (EHB)
+      palette[i].red   = r[i-32]/2;
+      palette[i].green = g[i-32]/2;
+      palette[i].blue  = b[i-32]/2;
+    }
+  }
+  png_set_PLTE( png_ptr, info_ptr, palette, ncol );
+
+  // start writing the file
+  png_write_info( png_ptr, info_ptr );
+  png_write_rows( png_ptr, row_pointers, h );
+
+  // finish up
+  png_write_end( png_ptr, info_ptr );
+  png_destroy_write_struct( &png_ptr, &info_ptr );
 }
 
 int main( int argc, char *argv[] ) {
@@ -163,7 +209,7 @@ int main( int argc, char *argv[] ) {
       printf( "sprite %d: %d*%d %dpl hotspot(%d,%d)\n",i,w*16,h,d,hx,hy);
       
       // read data at o and output png (maybe?)
-      snprintf( fname, 1000, "%s.%d.raw", argv[1],i );
+      snprintf( fname, 1000, "%s.%d.png", argv[1],i );
       FILE* out = fopen( fname, "wb" );
       saveBitplanesAsPNG( w,h,d, r,g,b, &data[o], out  );
       fclose(out);
