@@ -132,7 +132,8 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
 
 
   // initialize libpng
-  png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, png_voidp_NULL, png_error_ptr_NULL, png_error_ptr_NULL );
+  //png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, png_voidp_NULL, png_error_ptr_NULL, png_error_ptr_NULL );
+  png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
   if (!png_ptr) exit(1);
 
   png_infop info_ptr = png_create_info_struct(png_ptr);
@@ -142,7 +143,8 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
   }
 
   png_init_io( png_ptr, out );
-  png_set_compression_level( png_ptr, Z_BEST_COMPRESSION );
+  //png_set_compression_level( png_ptr, Z_BEST_COMPRESSION );
+  png_set_compression_level( png_ptr, PNG_Z_DEFAULT_COMPRESSION );
   png_set_IHDR( png_ptr, info_ptr, w*8, h, 8, ham?PNG_COLOR_TYPE_RGB:PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
 
   // setup row pointers
