@@ -384,7 +384,7 @@ int main( int argc, char *argv[] ) {
     if( strcmp(bname,"Work    ")==0 ) {
       FILE* out = fopen( fname, "wt" );
       printf("Work bank detected\nnumber of 2byte words: %d\n", (size-20)/2 );
-      fprintf( out, "{ words: [ " );
+      fprintf( out, "{ \"words\": [ " );
       for( i=0; i<(size-20)/2; ++i ) {
         fprintf( out, i>0?" ,%d":"%d", get2(20+i*2) );
       }
