@@ -1,4 +1,4 @@
-amosbank
+amosbank [![Build Status](https://travis-ci.org/dschwen/amosbank.svg)](https://travis-ci.org/dschwen/amosbank)
 ========
 
 A converter/unpacker for AMOS banks (the Amiga programming language)   
