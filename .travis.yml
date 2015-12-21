@@ -1,0 +1,8 @@
+language: cpp
+
+addons:
+  apt:
+    packages:
+      - libpng12-dev
+
+script: make
