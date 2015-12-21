@@ -143,8 +143,13 @@ void saveBitplanesAsPNG( int w, int h, int d, int *r, int *g, int *b, unsigned c
   }
 
   png_init_io( png_ptr, out );
-  //png_set_compression_level( png_ptr, Z_BEST_COMPRESSION );
+
+#ifdef PNG_Z_DEFAULT_COMPRESSION
   png_set_compression_level( png_ptr, PNG_Z_DEFAULT_COMPRESSION );
+#else
+  png_set_compression_level( png_ptr, Z_BEST_COMPRESSION );
+#endif
+
   png_set_IHDR( png_ptr, info_ptr, w*8, h, 8, ham?PNG_COLOR_TYPE_RGB:PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
 
   // setup row pointers

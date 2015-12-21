@@ -1,4 +1,4 @@
-all: amosbank amosextract
+all: amosbank
 
 amosbank: amosbank.cc
 	g++ -o amosbank amosbank.cc -lpng
