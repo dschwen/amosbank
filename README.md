@@ -2,7 +2,7 @@ amosbank [![Build Status](https://travis-ci.org/dschwen/amosbank.svg)](https://t
 ========
 
 A converter/unpacker for AMOS banks (the Amiga programming language)   
-(c) by Daniel Schwen, 2012     
+(c) by Daniel Schwen, 2012-2017    
 Licensed under CC-BY-SA 3.0
 
 Usage:
