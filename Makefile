@@ -1,6 +1,6 @@
 CXX ?= g++
 LIBPNG_CONFIG ?= libpng-config
-LDFLAGS += $(shell $(LIBPNG_CONFIG) --cflags --ldflags)
+LDFLAGS += $(shell $(LIBPNG_CONFIG) --static --cflags --ldflags)
 
 all: amosbank
 
